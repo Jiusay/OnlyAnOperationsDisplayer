@@ -1,5 +1,7 @@
 # OnlyAnOperationsDisplayer
 只是一个简单的操作显示工具  
+## 程序截图
+![image](images/app.PNG)
 ## 功能
 显示键盘和鼠标操作(仅此而已)  
 ## 其他
