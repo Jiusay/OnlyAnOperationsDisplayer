@@ -1,5 +1,8 @@
 #include <Windows.h>
 #include <CommCtrl.h>
+#include <cstring>
+using namespace std;
+#pragma warning(disable:4996)
 #include "resource.h"
 
 HWND skwnd = nullptr;
@@ -56,6 +59,7 @@ INT_PTR CALLBACK SKWindowProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
 		return 0;
 		//drag
 	case WM_LBUTTONDOWN:
+		if (IsDlgButtonChecked(mw, 1004) == BST_CHECKED)return 0;
 		SystemParametersInfoW(SPI_SETDRAGFULLWINDOWS, true, NULL, 0);
 		DefWindowProcW(hDlg, WM_NCLBUTTONDOWN, HTCAPTION, 0);
 		return 0;

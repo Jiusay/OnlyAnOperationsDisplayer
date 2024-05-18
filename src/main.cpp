@@ -43,7 +43,7 @@ int main() {
         L"Only an operations displayer",
         ((WS_OVERLAPPEDWINDOW | WS_VISIBLE) & (~(WS_MAXIMIZEBOX | WS_SIZEBOX))/*No maximze button and size*/),
         cursor.x - 250, cursor.y - 125,
-        500, 250,
+        500, 270,
         HWND_DESKTOP,
         nullptr,
         hi,
@@ -56,9 +56,9 @@ int main() {
     //Create controls
     HWND hctrl = nullptr;
     CreateWindowExW(0, L"Static",
-        L"ËØ≠Ë®Ä|Language",
+        L"”Ô—‘|Language",
         WS_VISIBLE | WS_CHILD,
-        5, 180,
+        5, 200,
         140, 20,
         wnd,
         (HMENU)1000,
@@ -68,14 +68,14 @@ int main() {
     hctrl = CreateWindowExW(0, L"ComboBox",
         L"",
         WS_VISIBLE | WS_CHILD | CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP,
-        160, 180,
+        160, 200,
         250, 20,
         wnd,
         (HMENU)1006,
         hi,
         nullptr);
 
-    ComboBox_AddString(hctrl, L"ÁÆÄ‰Ωì‰∏≠Êñá");
+    ComboBox_AddString(hctrl, L"ºÚÃÂ÷–Œƒ");
     ComboBox_AddString(hctrl, L"English");
     wchar_t buffer[512] = { 0 };
     SHGetSpecialFolderPathW(nullptr, buffer, CSIDL_APPDATA, TRUE);
@@ -85,7 +85,7 @@ int main() {
         MessageBoxFormatW(MB_OK | MB_ICONWARNING,
             L"",
             wnd,
-            L"Êó†Ê≥ïÊâìÂºÄËØ≠Ë®ÄÈÖçÁΩÆÊñá‰ª∂\n %s \nÁ®ãÂ∫èÂ∞Ü‰ΩøÁî®ÂÜÖÁΩÆÁöÑÁÆÄ‰Ωì‰∏≠Êñá‰Ωú‰∏∫ÊòæÁ§∫ËØ≠Ë®Ä",
+            L"Œﬁ∑®¥Úø™”Ô—‘≈‰÷√Œƒº˛\n %s \n≥Ã–ÚΩ´ π”√ƒ⁄÷√µƒºÚÃÂ÷–Œƒ◊˜Œ™œ‘ æ”Ô—‘",
             (path + L"curlt.txt").c_str());
         CreateDefaultLanguageTable(language_table);
         CreateDirectoryW(path.c_str(), nullptr);
@@ -141,7 +141,7 @@ int main() {
         nullptr);
 
     CreateWindowExW(0, L"Button",
-        language_table["lng.txt.sk_without_entrying"].c_str(),
+        language_table["lng.txt.lock_sk_wnd"].c_str(),
         BS_CHECKBOX | BS_AUTOCHECKBOX | WS_TABSTOP | WS_CHILD | WS_VISIBLE | WS_DISABLED,
         5, 76,
         490, 20,
@@ -171,6 +171,26 @@ int main() {
         nullptr);
     SendMessageW(hctrl, TBM_SETRANGE, TRUE, MAKELPARAM(6, 18));
 
+    CreateWindowExW(0, L"Button",
+        language_table["lng.txt.show_mouse"].c_str(),
+        BS_CHECKBOX | BS_AUTOCHECKBOX | WS_TABSTOP | WS_CHILD | WS_VISIBLE,
+        5, 148,
+        490, 20,
+        wnd,
+        (HMENU)1007,
+        hi,
+        nullptr);
+
+    CreateWindowExW(0, L"Button",
+        language_table["lng.txt.show_mouseop"].c_str(),
+        BS_CHECKBOX | BS_AUTOCHECKBOX | WS_TABSTOP | WS_CHILD | WS_VISIBLE | WS_DISABLED,
+        5, 169,
+        490, 20,
+        wnd,
+        (HMENU)1008,
+        hi,
+        nullptr);
+
     //Init font
     HFONT font = nullptr;
     NONCLIENTMETRICSW info = { 0 };
@@ -198,7 +218,7 @@ int main() {
     }
 
     //User quited
-    UnregisterClassW(L"OnlyAnOperationsDisplayerMainWndClassName", hi);
+    UnregisterClassW(wc.lpszClassName, hi);
     return (int)messages.wParam;
 }
 

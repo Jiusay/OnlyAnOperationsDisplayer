@@ -9,6 +9,7 @@
 #include "gk.h"
 #include "resource.h"
 #include "skproc.h"
+#include "mousebgwnd.h"
 using namespace std;
 
 LRESULT CALLBACK TFSRMainWindowProc(HWND hWnd,
@@ -20,6 +21,7 @@ LRESULT CALLBACK TFSRMainWindowProc(HWND hWnd,
 	//HWNDs
 	static HWND skwnd = nullptr;
 	static HWND self = nullptr;
+	static HWND mbgwnd = nullptr;
 
 	static HHOOK hmouseh = nullptr;
 
@@ -33,6 +35,9 @@ LRESULT CALLBACK TFSRMainWindowProc(HWND hWnd,
 		return 0;
 	case (WM_USER + 2):
 		skwnd = (decltype(skwnd))wParam;
+		return 0;
+	case (WM_USER + 3):
+		mbgwnd = (decltype(mbgwnd))lParam;
 		return 0;
 	case WM_DPICHANGED:
 		SetProcessDPIAware();
@@ -79,7 +84,7 @@ LRESULT CALLBACK TFSRMainWindowProc(HWND hWnd,
 						buffer);
 					return 0;
 				}
-				EnableWindow(GetDlgItem(hWnd, 1004/*Without inputting*/), TRUE);
+				EnableWindow(GetDlgItem(hWnd, 1004/*Without entrying*/), TRUE);
 				DialogBoxParamW(GetModuleHandle(nullptr),
 					MAKEINTRESOURCEW(IDD_KeysShowingWnd),
 					nullptr,
@@ -90,9 +95,26 @@ LRESULT CALLBACK TFSRMainWindowProc(HWND hWnd,
 			}
 			else {
 				CheckDlgButton(hWnd, 1004, BST_UNCHECKED);
-				EnableWindow(GetDlgItem(hWnd, 1004/*Without entrying*/), FALSE);
+				EnableWindow(GetDlgItem(hWnd, 1004/*Without inputting*/), FALSE);
 				PostMessageW(skwnd, WM_CLOSE, 0, 0);
 				skwnd = nullptr;
+			}
+			return 0;
+		case 1007:
+			if (IsDlgButtonChecked(hWnd, 1007) == BST_CHECKED) {
+				EnableWindow(GetDlgItem(hWnd, 1008), TRUE);
+				HHOOK hk = SetWindowsHookExW(WH_MOUSE_LL, MouseHook, GetModuleHandle(nullptr), 0);
+				DialogBoxParamW(GetModuleHandle(nullptr),
+					MAKEINTRESOURCEW(IDD_MouseShowingBg),
+					nullptr,
+					MBGWindowProc,
+					(LPARAM)hWnd);
+				UnhookWindowsHookEx(hk);
+			}
+			else {
+				EnableWindow(GetDlgItem(hWnd, 1008), FALSE);
+				CheckDlgButton(hWnd, 1008, BST_UNCHECKED);
+				PostMessageW(mbgwnd, WM_CLOSE, 0, 0);
 			}
 			return 0;
 		default:
