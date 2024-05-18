@@ -79,7 +79,7 @@ LRESULT CALLBACK TFSRMainWindowProc(HWND hWnd,
 						buffer);
 					return 0;
 				}
-				EnableWindow(GetDlgItem(hWnd, 1004/*Without entrying*/), TRUE);
+				EnableWindow(GetDlgItem(hWnd, 1004/*Without inputting*/), TRUE);
 				DialogBoxParamW(GetModuleHandle(nullptr),
 					MAKEINTRESOURCEW(IDD_KeysShowingWnd),
 					nullptr,
