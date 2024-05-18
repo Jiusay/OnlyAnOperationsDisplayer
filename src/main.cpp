@@ -56,7 +56,7 @@ int main() {
     //Create controls
     HWND hctrl = nullptr;
     CreateWindowExW(0, L"Static",
-        L"ÓïÑÔ|Language",
+        L"è¯­è¨€|Language",
         WS_VISIBLE | WS_CHILD,
         5, 180,
         140, 20,
@@ -75,7 +75,7 @@ int main() {
         hi,
         nullptr);
 
-    ComboBox_AddString(hctrl, L"¼òÌåÖĞÎÄ");
+    ComboBox_AddString(hctrl, L"ç®€ä½“ä¸­æ–‡");
     ComboBox_AddString(hctrl, L"English");
     wchar_t buffer[512] = { 0 };
     SHGetSpecialFolderPathW(nullptr, buffer, CSIDL_APPDATA, TRUE);
@@ -85,7 +85,7 @@ int main() {
         MessageBoxFormatW(MB_OK | MB_ICONWARNING,
             L"",
             wnd,
-            L"ÎŞ·¨´ò¿ªÓïÑÔÅäÖÃÎÄ¼ş\n %s \n³ÌĞò½«Ê¹ÓÃÄÚÖÃµÄ¼òÌåÖĞÎÄ×÷ÎªÏÔÊ¾ÓïÑÔ",
+            L"æ— æ³•æ‰“å¼€è¯­è¨€é…ç½®æ–‡ä»¶\n %s \nç¨‹åºå°†ä½¿ç”¨å†…ç½®çš„ç®€ä½“ä¸­æ–‡ä½œä¸ºæ˜¾ç¤ºè¯­è¨€",
             (path + L"curlt.txt").c_str());
         CreateDefaultLanguageTable(language_table);
         CreateDirectoryW(path.c_str(), nullptr);
@@ -198,7 +198,7 @@ int main() {
     }
 
     //User quited
-    UnregisterClassW(L"ToolsForScreenRecordingMWClass", hi);
+    UnregisterClassW(L"OnlyAnOperationsDisplayerMainWndClassName", hi);
     return (int)messages.wParam;
 }
 
