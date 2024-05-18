@@ -6,4 +6,4 @@
 ## 其他
 该工具不定时更新，支持多语言(后续将支持加载外部语言文件)  
 注 : 第一次启动该工具出现如下弹窗属于正常现象  
-![image]([images/warnmb_1.png](https://github.com/Jiusay/OnlyAnOperationsDisplayer/blob/main/images/warnmb_1.PNG))
+![image](images/warnmb_1.PNG)
