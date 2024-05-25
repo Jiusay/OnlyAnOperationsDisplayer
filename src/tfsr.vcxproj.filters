@@ -33,6 +33,9 @@
     <ClCompile Include="mousebgwnd.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="awndproc.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="lang.h">
@@ -54,6 +57,12 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="mousebgwnd.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="awndproc.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="mycast.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

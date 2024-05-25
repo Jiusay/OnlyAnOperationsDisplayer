@@ -1,6 +1,8 @@
 #include <Windows.h>
 #include <CommCtrl.h>
 #include <cstring>
+#include <ShlObj.h>
+#include <fstream>
 using namespace std;
 #pragma warning(disable:4996)
 #include "resource.h"
@@ -18,13 +20,21 @@ INT_PTR CALLBACK SKWindowProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
 	static short show_timer = 0;
 	static HWND mw = nullptr;
 	static RECT lastpos = { 0,0,0,0 };
+	static HBRUSH brush = nullptr;
+	static COLORREF bgcolor = 0;
 	switch (message)
 	{
 	case WM_CLOSE:
 		GetWindowRect(hDlg, &lastpos);
 		EndDialog(hDlg, 0);
+		if (brush != nullptr) {
+			DeleteObject(brush);
+			brush = nullptr;
+		}
 		return 0;
 	case WM_INITDIALOG:
+		SetWindowLongW(GetDlgItem(hDlg, IDC_Ks), GWL_STYLE,
+			(GetWindowLongW(GetDlgItem(hDlg, IDC_Ks), GWL_STYLE) | SS_CENTERIMAGE));
 		mw = (HWND)lParam;
 		if (lastpos.left == 0 && lastpos.top == 0) {
 			POINT cp;
@@ -35,13 +45,24 @@ INT_PTR CALLBACK SKWindowProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
 			SetWindowPos(hDlg, HWND_TOPMOST, lastpos.left, lastpos.top, 0, 0, SWP_NOSIZE);
 		}
 	{
+		//Init color
+		unsigned char colors[3] = { 0, 0, 0 };
+		wchar_t datapath[512] = { 0 };
+		SHGetSpecialFolderPathW(nullptr, datapath, CSIDL_APPDATA, TRUE);
+		wsprintfW(datapath, L"%s%s", datapath, L"\\Jiusay\\kbg_bgc.dat");
+		ifstream rf(datapath);
+		rf.read((char*)colors, 3);
+		rf.close();
+		brush = CreateSolidBrush((bgcolor = RGB(colors[0], colors[1], colors[2])));
+
+
 		LONG val = (LONG)SendMessageW(GetDlgItem(mw, 1005), TBM_GETPOS, 0, 0);
 
 		HFONT font = nullptr;
 		NONCLIENTMETRICSW info = { 0 };
 		info.cbSize = sizeof(NONCLIENTMETRICSW);
 		if (SystemParametersInfoW(SPI_GETNONCLIENTMETRICS, 0, &info, 0)) {
-			((LOGFONTW*)&info.lfMessageFont)->lfHeight += (abs(val) * 7);
+			((LOGFONTW*)&info.lfMessageFont)->lfHeight += (abs(val) * 6.7);
 			font = CreateFontIndirectW((LOGFONTW*)&info.lfMessageFont);
 		}
 		EnumChildWindows(hDlg, [](HWND h, LPARAM l)->BOOL {
@@ -219,8 +240,8 @@ INT_PTR CALLBACK SKWindowProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
 
 			SetDlgItemTextW(hDlg, IDC_Ks, L"\\");
 			break;
-		case 91:case 92://Windows
-			SetDlgItemTextW(hDlg, IDC_Ks, L"Windows");
+		case 91:case 92://Win
+			SetDlgItemTextW(hDlg, IDC_Ks, L"Win");
 			break;
 		case 33://PageUp
 			SetDlgItemTextW(hDlg, IDC_Ks, L"PageUp");
@@ -240,9 +261,8 @@ INT_PTR CALLBACK SKWindowProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
 
 		default:
 		{
-			wchar_t buffer[32] = { 0 };
-			wsprintfW(buffer, L"%hc", (wchar_t)wParam);
-			SetDlgItemTextW(hDlg, IDC_Ks, buffer);
+			wchar_t text[2] = { (wchar_t)wParam,L'\0' };
+			SetDlgItemTextW(hDlg, IDC_Ks, text);
 		}
 			break;
 		}
@@ -255,7 +275,7 @@ INT_PTR CALLBACK SKWindowProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
 			NONCLIENTMETRICSW info = { 0 };
 			info.cbSize = sizeof(NONCLIENTMETRICSW);
 			if (SystemParametersInfoW(SPI_GETNONCLIENTMETRICS, 0, &info, 0)) {
-				((LOGFONTW*)&info.lfMessageFont)->lfHeight += (abs((int)wParam) * 7);
+				((LOGFONTW*)&info.lfMessageFont)->lfHeight += (abs((int)wParam) * 6.7);
 				font = CreateFontIndirectW((LOGFONTW*)&info.lfMessageFont);
 			}
 			EnumChildWindows(hDlg, [](HWND h, LPARAM l)->BOOL {
@@ -264,6 +284,14 @@ INT_PTR CALLBACK SKWindowProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
 				}, (LPARAM)font);
 		}
 		break;
+	case WM_CTLCOLORSTATIC:
+		if (GetDlgCtrlID((HWND)lParam) == IDC_Ks) {
+			SetBkColor((HDC)wParam, bgcolor);
+			return (INT_PTR)brush;
+		}
+		else {
+			return (INT_PTR)GetStockObject(NULL_BRUSH);
+		}
 	default:
 		break;
 	}

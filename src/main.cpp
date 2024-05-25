@@ -15,6 +15,8 @@ using namespace std;
 
 map<string, wstring> language_table;
 
+map<string, wstring>* GetLanguageTablePtr() { return &language_table; }
+
 int main() {
     //DPI Aware
     SetProcessDPIAware();
@@ -33,13 +35,13 @@ int main() {
     wc.cbWndExtra = 0;
     wc.hbrBackground = (HBRUSH)COLOR_WINDOW;
     if (!RegisterClassExW(&wc)) {
-        MessageBoxW(NULL, language_table["lng.tip.fail_to_register"].c_str(), L"", MB_OK | MB_ICONERROR);
+        MessageBoxW(NULL, L"Fail to register window class", L"", MB_OK | MB_ICONERROR);
         exit(1);
     }
     //Create window
     HINSTANCE hi = GetModuleHandle(nullptr);
     POINT cursor = { 0,0 }; GetCursorPos(&cursor);
-    HWND wnd = CreateWindowExW(0, L"OnlyAnOperationsDisplayerMainWndClassName",
+    HWND wnd = CreateWindowExW(0, wc.lpszClassName,
         L"Only an operations displayer",
         ((WS_OVERLAPPEDWINDOW | WS_VISIBLE) & (~(WS_MAXIMIZEBOX | WS_SIZEBOX))/*No maximze button and size*/),
         cursor.x - 250, cursor.y - 125,
@@ -48,22 +50,12 @@ int main() {
         nullptr,
         hi,
         nullptr);
+
     if (wnd == nullptr) {
-        MessageBoxW(NULL, language_table["lng.tip.fail_to_create_wnd"].c_str(), L"", MB_OK | MB_ICONERROR);
+        MessageBoxW(NULL, L"Fail to create window", L"", MB_OK | MB_ICONERROR);
         exit(1);
     }
-
-    //Create controls
     HWND hctrl = nullptr;
-    CreateWindowExW(0, L"Static",
-        L"语言|Language",
-        WS_VISIBLE | WS_CHILD,
-        5, 200,
-        140, 20,
-        wnd,
-        (HMENU)1000,
-        hi,
-        nullptr);
 
     hctrl = CreateWindowExW(0, L"ComboBox",
         L"",
@@ -77,16 +69,12 @@ int main() {
 
     ComboBox_AddString(hctrl, L"简体中文");
     ComboBox_AddString(hctrl, L"English");
+
     wchar_t buffer[512] = { 0 };
     SHGetSpecialFolderPathW(nullptr, buffer, CSIDL_APPDATA, TRUE);
     wstring path(wstring(buffer) + L"\\Jiusay\\");
     wifstream in(path + L"curlt.txt");
     if (!in) {
-        MessageBoxFormatW(MB_OK | MB_ICONWARNING,
-            L"",
-            wnd,
-            L"无法打开语言配置文件\n %s \n程序将使用内置的简体中文作为显示语言",
-            (path + L"curlt.txt").c_str());
         CreateDefaultLanguageTable(language_table);
         CreateDirectoryW(path.c_str(), nullptr);
         wofstream wf(path + L"curlt.txt",ios::out | ios::trunc);
@@ -94,19 +82,70 @@ int main() {
             wf << L"<zhCN>";
         }
         wf.close();
+        wf.clear();
+        unsigned char colors[3] = { 255, 255, 255 };
+        ofstream awf(path + L"kbg_bgc.dat", ios::out | ios::trunc);
+        if (awf.is_open()) {
+            awf.write((char*)colors, 3);
+            awf.close();
+            awf.clear();
+        }
+        awf.open(path + L"mbg_bgc_1.dat", ios::out | ios::trunc);
+        colors[0] = 100;
+        colors[1] = 100;
+        colors[2] = 255;
+        if (awf.is_open()) {
+            awf.write((char*)colors, 3);
+            awf.close();
+            awf.clear();
+        }
+        awf.open(path + L"mbg_bgc_2.dat", ios::out | ios::trunc);
+        colors[0] = 255;
+        colors[1] = 255;
+        colors[2] = 100;
+        if (awf.is_open()) {
+            awf.write((char*)colors, 3);
+            awf.close();
+            awf.clear();
+        }
     }
     else {
         ZeroMemory(buffer, sizeof(wchar_t) * 512);
-        in.read(buffer, 512);
+        in.read(buffer, 511);
         if (wcscmp(buffer, L"<zhCN>") == 0) { 
             CreateDefaultLanguageTable(language_table); 
             ComboBox_SetCurSel(hctrl, 0);
+            ComboBox_AddString(hctrl, language_table["lng.txt.elngf"].c_str());
         }
         else if (wcscmp(buffer, L"<enUS>") == 0){
             CreateDefaultLanguageTable2(language_table);
             ComboBox_SetCurSel(hctrl, 1);
+            ComboBox_AddString(hctrl, language_table["lng.txt.elngf"].c_str());
+        }
+        else {
+            if (!LoadLanguageFile(buffer, language_table)) {
+                MessageBoxFormatW(MB_OK | MB_ICONWARNING,
+                    L"",
+                    nullptr,
+                    L"无法加载以下语言文件，程序将以简体中文作为显示语言\n%s",
+                    buffer);
+            }
+            ComboBox_AddString(hctrl, language_table["lng.txt.elngf"].c_str());
+            ComboBox_SetCurSel(hctrl, 2);
         }
     }
+
+    //Create controls
+    CreateWindowExW(0, L"Static",
+        L"语言|Language",
+        WS_VISIBLE | WS_CHILD,
+        5, 200,
+        140, 20,
+        wnd,
+        (HMENU)1000,
+        hi,
+        nullptr);
+
     in.close();
     
 
@@ -121,10 +160,10 @@ int main() {
         nullptr);
 
     CreateWindowExW(0, L"Button",
-        language_table["lng.txt.minimze_in_using_other_wnd"].c_str(),
-        BS_CHECKBOX | BS_AUTOCHECKBOX | WS_TABSTOP | WS_CHILD | WS_VISIBLE,
+        language_table["lng.txt.appearance"].c_str(),
+        WS_CHILD | WS_VISIBLE,
         5, 26,
-        490, 20,
+        485, 30,
         wnd,
         (HMENU)1002,
         hi,
@@ -164,7 +203,7 @@ int main() {
         L"",
         TBS_BOTH | TBS_NOTICKS | WS_TABSTOP | WS_CHILD | WS_VISIBLE,
         5, 118,
-        490, 20,
+        485, 25,
         wnd,
         (HMENU)1005,
         hi,
@@ -206,7 +245,7 @@ int main() {
     UpdateWindow(wnd);
 
     //Pass the poniter of language table
-    PostMessageW(wnd, (WM_USER + 1), (WPARAM)&language_table, (LPARAM)&language_table);
+    //PostMessageW(wnd, (WM_USER + 1), (WPARAM)&language_table, (LPARAM)&language_table);
 
     //Message
     MSG messages;

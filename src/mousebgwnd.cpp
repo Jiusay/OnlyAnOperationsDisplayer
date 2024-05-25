@@ -1,4 +1,8 @@
 #include <Windows.h>
+#include <ShlObj.h>
+#include <fstream>
+using namespace std;
+
 HWND mbgwnd = nullptr, mainw = nullptr;
 LRESULT CALLBACK MouseHook(_In_ int nCode, _In_ WPARAM wParam, _In_ LPARAM lParam) {
 	if (nCode >= 0) {
@@ -20,10 +24,11 @@ LRESULT CALLBACK MouseHook(_In_ int nCode, _In_ WPARAM wParam, _In_ LPARAM lPara
 INT_PTR CALLBACK MBGWindowProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam) {
 	static short reset_timer = 0;
 	static COLORREF color = RGB(100, 100, 255);
+	static COLORREF color_def = RGB(100, 100, 255), color_clicked = RGB(255, 255, 100);
 	switch (message)
 	{
 	case (WM_USER + 1):
-		color = RGB(255, 255, 100);
+		color = color_clicked;
 		reset_timer = 2;
 		InvalidateRect(hDlg, nullptr, TRUE);
 		break;
@@ -32,6 +37,23 @@ INT_PTR CALLBACK MBGWindowProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lP
 		RECT wr; GetWindowRect(hDlg, &wr);
 		HRGN rgn = CreateEllipticRgn(0, 0, (wr.right - wr.left), (wr.bottom - wr.top));
 		SetWindowRgn(hDlg, rgn, TRUE);
+
+		unsigned char colors[6] = { 0 };
+		wchar_t datapath[512] = { 0 };
+		SHGetSpecialFolderPathW(nullptr, datapath, CSIDL_APPDATA, TRUE);
+		wsprintfW(datapath, L"%s%s", datapath, L"\\Jiusay\\mbg_bgc_1.dat");
+		ifstream rf(datapath);
+		rf.read((char*)colors, 3);
+		rf.close();
+		rf.clear();
+		color_def = RGB(colors[0], colors[1], colors[2]);
+		ZeroMemory(datapath, sizeof(wchar_t) * 512);
+		SHGetSpecialFolderPathW(nullptr, datapath, CSIDL_APPDATA, TRUE);
+		wsprintfW(datapath, L"%s%s", datapath, L"\\Jiusay\\mbg_bgc_2.dat");
+		rf.open(datapath);
+		rf.read((char*)colors + 3, 3);
+		rf.close();
+		color_clicked = RGB(colors[3], colors[4], colors[5]);
 	}
 		mbgwnd = hDlg;
 		mainw = (HWND)lParam;
@@ -39,7 +61,7 @@ INT_PTR CALLBACK MBGWindowProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lP
 		PostMessageW((HWND)lParam, (WM_USER + 3), (WPARAM)hDlg, (LPARAM)hDlg);
 		SetWindowLongW(hDlg, GWL_EXSTYLE,
 			(GetWindowLongW(hDlg, GWL_EXSTYLE) | WS_EX_LAYERED | WS_EX_TRANSPARENT));
-		SetLayeredWindowAttributes(hDlg, 0, 180, LWA_ALPHA);
+		SetLayeredWindowAttributes(hDlg, 0, 140, LWA_ALPHA);
 		{
 			HDC dc = GetWindowDC(hDlg);
 			HBRUSH brush = CreateSolidBrush(RGB(0, 255, 255));
@@ -53,7 +75,7 @@ INT_PTR CALLBACK MBGWindowProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lP
 	case WM_TIMER:
 		if (wParam == 1) {
 			if (reset_timer > 0) { reset_timer -= 1; }
-			else { color = RGB(100, 100, 255); InvalidateRect(hDlg, nullptr, TRUE); }
+			else { color = color_def; InvalidateRect(hDlg, nullptr, TRUE); }
 		}
 		break;
 	case WM_ACTIVATE:

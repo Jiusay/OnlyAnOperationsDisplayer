@@ -127,6 +127,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="awndproc.cpp" />
     <ClCompile Include="lang.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="mainproc.cpp" />
@@ -135,10 +136,12 @@
     <ClCompile Include="skproc.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="awndproc.h" />
     <ClInclude Include="gk.h" />
     <ClInclude Include="lang.h" />
     <ClInclude Include="mainproc.h" />
     <ClInclude Include="mousebgwnd.h" />
+    <ClInclude Include="mycast.h" />
     <ClInclude Include="myuihelper.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="skproc.h" />

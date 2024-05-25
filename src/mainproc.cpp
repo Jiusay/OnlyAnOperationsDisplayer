@@ -10,7 +10,12 @@
 #include "resource.h"
 #include "skproc.h"
 #include "mousebgwnd.h"
+#include "awndproc.h"
 using namespace std;
+#define STATUS_SHOWINGKBDOPERA 128u
+#define STATUS_SHOWINGMOUSEOPERA 64u
+#define STATUS_CHOOSINGCOLOR 32u
+map<string, wstring>* GetLanguageTablePtr();
 
 LRESULT CALLBACK TFSRMainWindowProc(HWND hWnd,
 	UINT message,
@@ -25,13 +30,13 @@ LRESULT CALLBACK TFSRMainWindowProc(HWND hWnd,
 
 	static HHOOK hmouseh = nullptr;
 
+	static unsigned char bitstatus = 0;
+
 	switch (message)
 	{
 	case WM_CREATE:
+		ltp = GetLanguageTablePtr();
 		self = hWnd;
-		return 0;
-	case (WM_USER + 1):
-		ltp = (decltype(ltp))wParam;
 		return 0;
 	case (WM_USER + 2):
 		skwnd = (decltype(skwnd))wParam;
@@ -45,11 +50,6 @@ LRESULT CALLBACK TFSRMainWindowProc(HWND hWnd,
 	case WM_CLOSE:
 		PostQuitMessage(0);
 		return 0;
-	case WM_ACTIVATE:
-		if (IsDlgButtonChecked(hWnd, 1002)/*check box of minimze in using other window*/ == BST_CHECKED &&
-			wParam != WA_ACTIVE && wParam != WA_CLICKACTIVE)
-			ShowWindow(hWnd, SW_MINIMIZE);
-		return 0;
 	case WM_COMMAND:
 		switch (LOWORD(wParam))
 		{
@@ -61,12 +61,25 @@ LRESULT CALLBACK TFSRMainWindowProc(HWND hWnd,
 				SetWindowPos(hWnd, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
 			}
 			return 0;
+		case 1002:
+			if ((bitstatus & STATUS_CHOOSINGCOLOR))return 0;
+			bitstatus |= STATUS_CHOOSINGCOLOR;
+			EnableWindow(GetDlgItem(hWnd, 1002), FALSE);
+			DialogBoxParamW(GetModuleHandle(nullptr),
+				MAKEINTRESOURCEW(IDD_Appearance),
+				nullptr,
+				AppearanceWindowProc,
+				(LPARAM)ltp);
+			EnableWindow(GetDlgItem(hWnd, 1002), TRUE);
+			bitstatus &= (~STATUS_CHOOSINGCOLOR);
 		case 1003://Show keys
 			if (IsDlgButtonChecked(hWnd, 1003) == BST_CHECKED) {
+				if ((bitstatus & STATUS_SHOWINGKBDOPERA))return 0;
+				bitstatus |= STATUS_SHOWINGKBDOPERA;
 				//SetHook
 				HHOOK hk = SetWindowsHookExW(WH_KEYBOARD_LL, KeyboardHook, GetModuleHandle(nullptr), 0);
 				if (hk == NULL) {
-					wchar_t buffer[128] = { 0 };
+					wchar_t buffer[256] = { 0 };
 					FormatMessageW(
 						FORMAT_MESSAGE_FROM_SYSTEM |
 						FORMAT_MESSAGE_IGNORE_INSERTS,
@@ -74,7 +87,7 @@ LRESULT CALLBACK TFSRMainWindowProc(HWND hWnd,
 						GetLastError(),
 						MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
 						buffer,
-						MAX_PATH,
+						256,
 						nullptr
 					);
 					MessageBoxFormatW(MB_OK | MB_ICONERROR,
@@ -92,6 +105,7 @@ LRESULT CALLBACK TFSRMainWindowProc(HWND hWnd,
 					(LPARAM)self);
 				UnhookWindowsHookEx(hk);
 				//Unhook
+				bitstatus &= (~STATUS_SHOWINGKBDOPERA);
 			}
 			else {
 				CheckDlgButton(hWnd, 1004, BST_UNCHECKED);
@@ -102,6 +116,8 @@ LRESULT CALLBACK TFSRMainWindowProc(HWND hWnd,
 			return 0;
 		case 1007:
 			if (IsDlgButtonChecked(hWnd, 1007) == BST_CHECKED) {
+				if ((bitstatus & STATUS_SHOWINGMOUSEOPERA))return 0;
+				bitstatus |= STATUS_SHOWINGMOUSEOPERA;
 				EnableWindow(GetDlgItem(hWnd, 1008), TRUE);
 				HHOOK hk = SetWindowsHookExW(WH_MOUSE_LL, MouseHook, GetModuleHandle(nullptr), 0);
 				DialogBoxParamW(GetModuleHandle(nullptr),
@@ -110,6 +126,7 @@ LRESULT CALLBACK TFSRMainWindowProc(HWND hWnd,
 					MBGWindowProc,
 					(LPARAM)hWnd);
 				UnhookWindowsHookEx(hk);
+				bitstatus &= (~STATUS_SHOWINGMOUSEOPERA);
 			}
 			else {
 				EnableWindow(GetDlgItem(hWnd, 1008), FALSE);
@@ -128,8 +145,29 @@ LRESULT CALLBACK TFSRMainWindowProc(HWND hWnd,
 			wofstream wf(path + L"curlt.txt",ios::out | ios::trunc);
 			if (index == 0) {
 				wf << L"<zhCN>";
-			}if (index == 1) {
+			}
+			else if (index == 1) {
 				wf << L"<enUS>";
+			}
+			else {
+				OPENFILENAMEW ofn;
+				wchar_t path[512] = { 0 };
+				ZeroMemory(&ofn, sizeof(ofn));
+				ofn.lStructSize = sizeof(ofn);
+				ofn.hwndOwner = hWnd;
+				ofn.lpstrFile = path;
+				ofn.nMaxFile = sizeof(path);
+				ofn.lpstrFilter = L"语言映射文件(*.lmf)\0*.lmf\0所有文件\0*.*";
+				ofn.nFilterIndex = 1;
+				ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+				ofn.Flags |= OFN_EXPLORER;
+				if (GetOpenFileNameW(&ofn)) {
+					wf << wstring(path);
+				}
+				else {
+					wf.close();
+					return 0;
+				}
 			}
 			wf.close();
 			if (MessageBoxW(hWnd, ltp->operator[]("lng.tip.lng_changed").c_str(),
